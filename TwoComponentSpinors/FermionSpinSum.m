@@ -16,7 +16,7 @@ FermionSpinSum::usage="";
 Begin["Private`"]
 
 FermionSpinSum[exp_]:=Module[{ret},
-	exp/.{
+	Expand[exp]/.{
 		SpinorLine[
             SpinorX[p1_,m1_],
             SigmaMatrix[sig1__],

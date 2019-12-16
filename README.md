@@ -101,6 +101,3 @@ Contract[PolarizationSum[FermionSpinSum[exp*expdag]]]
     - (2*LDot[k, k]*LDot[p1, p2])/mz^2
 *)
 ```
-
-
-```
