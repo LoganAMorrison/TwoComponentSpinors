@@ -14,4 +14,6 @@ WeylMatrix::usage="WeylMatrix[\!\(\*SubscriptBox[\(mtx\), \(1\)]\),...,\!\(\*Sub
 
 Begin["Private`"]
 
+WeylMatrix[a___,WeylMatrix[b___],c___]:=WeylMatrix[a,b,c];
+
 End[]

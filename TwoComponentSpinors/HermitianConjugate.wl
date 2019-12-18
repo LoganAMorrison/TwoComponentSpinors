@@ -21,22 +21,22 @@ Options[HermitianConjugate] = {
 	"ComplexSymbols" -> {}
 }
 
-HermitianConjugate[exp_, OptionsPattern[]]:= Module[{iexp,cvars},
+HermitianConjugate[expr_, OptionsPattern[]]:= Module[{iexpr,cvars},
 
 	cvars = OptionValue["ComplexSymbols"];
 	(* Validate that "ComplexSymbols" is a list *)
 	If[Not[ListQ[cvars]], $Failed];
 	(* make replacement list for complex valiables *)
-	cvars = Table[cvar -> Conjugate[cvar], {cvar, cvars}];
+	cvars=Join[{I->-I,-I->I},Table[cvar -> Conjugate[cvar], {cvar, cvars}]];
 
-	iexp=exp/.{I->-I};
-	iexp=iexp/.{
+	iexpr=expr/.{Weyl1->Weyl1Bar, Weyl1Bar->Weyl1};
+	iexpr=iexpr/.{
 		PolarizationVector[p_,m_]:>PolarizationVectorDag[p,m],
 		PolarizationVectorDag[p_,m_]:>PolarizationVector[p,m]
 	};
-	iexp=iexp/.{WeylMatrix[a___]:>WeylMatrix@@Reverse[List[a]]};
-	iexp=iexp/.{WeylLine[a_List,b_List,c_WeylMatrix]:>WeylLine[b,a,c]};
-	iexp/.cvars
+	iexpr=iexpr/.{WeylMatrix[a___]:>WeylMatrix@@Reverse[List[a]]};
+	iexpr=iexpr/.{WeylLine[a_List,b_List,c_WeylMatrix]:>WeylLine[b,a,c]};
+	iexpr/.cvars
 ]
 
 End[]

@@ -26,12 +26,9 @@ ConvertWeylLine[
 	wl=wl/.{LTensor[WeylSBar, mu_]:>LTSB[mu]};
 	wl=wl/.{WeylMatrix[a___]:>WM[a]};
 
-	(* Eliminate any inner WeylMatrix *)
-	wl=wl//.{WM[a___,WM[b___],c___]:>WM[a,b,c]};
-
 	wl=wl/.{
-		WM[c1_. Weyl1 + a1_.] :> WMSS[c1 * Weyl1 + a1],
-		WM[c1_. Weyl1Bar + a1_.] :> WMSBSB[c1 * Weyl1Bar + a1]
+		WM[c1_. Weyl1 + a1_.] :> WMSSB[c1 * Weyl1 + a1],
+		WM[c1_. Weyl1Bar + a1_.] :> WMSBS[c1 * Weyl1Bar + a1]
 	};
 
 	wl=wl//.{
@@ -128,15 +125,12 @@ InternalFermionSpinSum[WeylLine[l1___],WeylLine[l2___]]:=Module[{wl1,wl2,prod,WF
 FermionSpinSum[exp_]:=Module[{iexp,lines,nlines,coeffs},
 
 	ExpandAll[exp]/.{
-		WeylLine[
-			wf1_List /; SameQ[Length[wf1], 3],
-			wf2_List /; SameQ[Length[wf2], 3], WeylMatrix[mtx1___]
-		] *
-		WeylLine[
-			wf3_List /; SameQ[Length[wf3], 3],
-			wf4_List /; SameQ[Length[wf4], 3], WeylMatrix[mtx2___]
-		] :> InternalFermionSpinSum[WeylLine[wf1,wf2,WeylMatrix[mtx1]],
-							        WeylLine[wf3,wf4,WeylMatrix[mtx2]]]
+		WeylLine[{s1_,p1_,m1_},{s2_,p2_,m2_},WeylMatrix[mtx1___]] *
+		WeylLine[{s3_,p2_,m2_},{s4_,p1_,m1_}, WeylMatrix[mtx2___]] :>
+		InternalFermionSpinSum[
+			WeylLine[{s1,p1,m1},{s2,p2,m2},WeylMatrix[mtx1]],
+			WeylLine[{s3,p2,m2},{s4,p1,m1},WeylMatrix[mtx2]]
+		]
 	}
 ]
 
