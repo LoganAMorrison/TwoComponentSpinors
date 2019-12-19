@@ -30,5 +30,77 @@ structure of WeylMatrix[...,\!\(\*SubscriptBox[\(mtx\), \(n\)]\)])";
 
 Begin["Private`"]
 
+CurrentValue[$FrontEndSession, {InputAliases, "lx"}]= RowBox[{
+        "\[LeftAngleBracket]",
+        "\[ScriptX]",
+        "[",
+        "\[SelectionPlaceholder],",
+        "\[Placeholder]",
+        "]"
+}];
+CurrentValue[$FrontEndSession, {InputAliases, "ly"}]= RowBox[{
+        "\[LeftAngleBracket]",
+        "\[ScriptY]",
+        "[",
+        "\[SelectionPlaceholder],",
+        "\[Placeholder]",
+        "]"
+}];
+CurrentValue[$FrontEndSession, {InputAliases, "lxd"}]= RowBox[{
+        "\[LeftAngleBracket]",
+        SuperscriptBox["\[ScriptX]","\[Dagger]"],
+        "[",
+        "\[SelectionPlaceholder],",
+        "\[Placeholder]",
+        "]"
+}];
+CurrentValue[$FrontEndSession, {InputAliases, "lyd"}]= RowBox[{
+        "\[LeftAngleBracket]",
+        SuperscriptBox["\[ScriptY]","\[Dagger]"],
+        "[",
+        "\[SelectionPlaceholder],",
+        "\[Placeholder]",
+        "]"
+}];
+
+
+CurrentValue[$FrontEndSession, {InputAliases, "rx"}] = RowBox[{
+    "\[ScriptX]",
+    "[",
+    "\[SelectionPlaceholder]",
+    ",",
+    "\[Placeholder]",
+    "]",
+    "\[RightAngleBracket]"
+}]
+CurrentValue[$FrontEndSession, {InputAliases, "ry"}] = RowBox[{
+    "\[ScriptY]",
+    "[",
+    "\[SelectionPlaceholder]",
+    ",",
+    "\[Placeholder]",
+    "]",
+    "\[RightAngleBracket]"
+}]
+CurrentValue[$FrontEndSession, {InputAliases, "rxd"}] = RowBox[{
+    SuperscriptBox["\[ScriptX]","\[Dagger]"],
+    "[",
+    "\[SelectionPlaceholder]",
+    ",",
+    "\[Placeholder]",
+    "]",
+    "\[RightAngleBracket]"
+}]
+CurrentValue[$FrontEndSession, {InputAliases, "ryd"}] = RowBox[{
+    SuperscriptBox["\[ScriptY]","\[Dagger]"],
+    "[",
+    "\[SelectionPlaceholder]",
+    ",",
+    "\[Placeholder]",
+    "]",
+    "\[RightAngleBracket]"
+}]
+
+
 
 End[]

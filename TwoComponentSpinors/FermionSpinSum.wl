@@ -10,128 +10,314 @@
 (* :Copyright: (c) 2019 ... *)
 
 FermionSpinSum::usage="";
+WeylLineCollapse::usage="";
+ConvertToInternal::usage="";
+WeylLineFixOrder::usage="";
 
 Begin["Private`"]
 
 
-ConvertWeylLine[
-	WeylLine[
-		wf1_List /; SameQ[Length[wf1], 3],
-		wf2_List /; SameQ[Length[wf2], 3], WeylMatrix[mtx___]
+(* ConvertToInternal[expr]
+	Convert expressions into more convinient form.
+*)
+ConvertToInternal[expr___]:=expr//.{
+	WeylMatrix[mtx___]:>iWM[mtx],
+	LTensor[WeylS, mu_] :> iLTS[mu],
+	LTensor[WeylSBar, mu_] :> iLTSB[mu]
+};
+
+(* ConvertToInternal[expr]
+	Convert expressions back to external form.
+*)
+ConvertToExternal[expr___]:=expr//.{
+	iWM[mtx___] :> WeylMatrix[mtx],
+	iLTS[mu_] :> LTensor[WeylS, mu],
+	iLTSB[mu_] :> LTensor[WeylSBar, mu]
+};
+
+
+(* WeylLineApplyVectorFierz[expr]
+	Reduce expression of the form:
+		(z1.S_mu.z2d) * (z3d.Sb_mu.z4)
+		(z1d.Sd_mu.z2) * (z3d.Sb_mu.z4)
+		(z1.S_mu.z2d) * (z3.S_mu.z4d)
+*)
+WeylLineApplyVectorFierz[expr___]:=expr//.{
+	WeylLine[{s1_,p1_,m1_},{s2_,p2_,m2_},iWM[iLTS[mu_]]] *
+	WeylLine[{s3_,p3_,m3_},{s4_,p4_,m4_},iWM[iLTSB[mu_]]] :>
+		-2 * WeylLine[{s1,p1,m1},{s4,p4,m4},iWM[Weyl1]] *
+		WeylLine[{s2,p2,m2},{s3,p3,m3},iWM[Weyl1Bar]],
+
+	WeylLine[{s1_,p1_,m1_},{s2_,p2_,m2_},iWM[iLTSB[mu_]]] *
+	WeylLine[{s3_,p3_,m3_},{s4_,p4_,m4_},iWM[iLTSB[mu_]]] :>
+		2 * WeylLine[{s1,p1,m1},{s3,p3,m3},iWM[Weyl1Bar]] *
+		WeylLine[{s4,p4,m4},{s2,p2,m2},iWM[Weyl1]],
+
+	WeylLine[{s1_,p1_,m1_},{s2_,p2_,m2_},iWM[iLTS[mu_]]] *
+	WeylLine[{s3_,p3_,m3_},{s4_,p4_,m4_},iWM[iLTS[mu_]]] :>
+		2 * WeylLine[{s1,p1,m1},{s3,p3,m3},iWM[Weyl1]] *
+		WeylLine[{s4,p4,m4},{s2,p2,m2},iWM[Weyl1Bar]]
+};
+
+(* WeylLinesRemoveZero[expr]
+	Kill off factors of z1.z1 or z1d.z1d since z's are communting.
+*)
+WeylLinesRemoveZero[expr___]:=expr//.{
+	WeylLine[{s1_,p1_,m1_}, {s1_,p1_,m1_}, iWM[Weyl1|Weyl1Bar]] :> 0
+};
+
+
+(* WeylLineMetricContract[expr]
+	Contracts adjacent WeylLines of the form:
+		g_{mu,nu} * WeylLine[...,...,iWM[X_mu]] * WeylLine[...,...,iWM[X_nu]]
+	into
+		WeylLine[...,...,iWM[X_mu]] * WeylLine[...,...,iWM[X_mu]]
+*)
+WeylLineMetricContract[expr___]:=expr//.{
+	WeylLine[{s1_,p1_,m1_},{s2_,p2_,m2_},iWM[(pat1:iLTS|iLTSB)[mu1_]]] *
+	WeylLine[{s3_,p3_,m3_},{s4_,p4_,m4_},iWM[(pat2:iLTS|iLTSB)[mu2_]]] *
+	LTensor[MetricG,mu1_,mu2_] :>
+		WeylLine[{s1,p1,m1},{s2,p2,m2},iWM[pat1[mu1]]] *
+		WeylLine[{s3,p3,m3},{s4,p4,m4},iWM[pat2[mu1]]]
+};
+
+(* WeylLineFixOrder[expr]
+	Reverses the order of spinors which aren't facing tail to head, i.e.:
+		(z_1.X.z_2) * (z_3.Y.z_2)
+	get's converted into
+		(z_1.X.z_2) * (z_2.Y'.z_3)
+*)
+WeylLineFixOrder[expr___]:=ReleaseHold[expr/.{
+	(* (z1.1.z2)^2 -> -(z1.1.z2) * (z2.1.z1) *)
+	WeylLine[{s1_,p1_,m1_},{s2_,p2_,m2_},iWM[pat1:Weyl1|Weyl1Bar]]^2 :>
+		-1 * WeylLine[{s1,p1,m1},{s2,p2,m2},iWM[pat1]] *
+		WeylLine[{s2,p2,m2},{s1,p1,m1},iWM[pat1]],
+	(* (z1.X.z2) (z3.1.z2) -> -(z1.X.z2) * (z2.1.z3) *)
+	WeylLine[{s1_,p1_,m1_},{s2_,p2_,m2_},iWM[mtx___]] *
+	WeylLine[{s3_,p3_,m3_},{s4_,p2_,m2_},iWM[pat2:Weyl1|Weyl1Bar]] :>
+		-1 * WeylLine[{s1,p1,m1},{s2,p2,m2},iWM[mtx]] *
+		WeylLine[{s4,p2,m2},{s3,p3,m3},iWM[pat2]],
+	WeylLine[{s1_,p1_,m1_},{s2_,p2_,m2_},iWM[mtx___]] *
+	WeylLine[{s3_,p1_,m1_},{s4_,p4_,m4_},iWM[pat2:Weyl1|Weyl1Bar]] :>
+		-1 * WeylLine[{s1,p1,m1},{s2,p2,m2},iWM[mtx]] *
+		WeylLine[{s4,p4,m4},{s3,p1,m1},iWM[pat2]],
+	(* (z1.X.z2) (z3.Y.z2) -> (-1)^(Length[Y]+1) (z1.X.z2) * (z2.YR.z3)
+		with YR being the reverse of Y with WeylS<->WeylSBar *)
+	WeylLine[{s1_,p1_,m1_},{s2_,p2_,m2_},iWM[mtx1___]] *
+	WeylLine[{s3_,p3_,m3_},{s4_,p2_,m2_},iWM[mtx2___]] :>
+		(-1)^(Length[List[mtx2]]+1) *
+		WeylLine[{s1,p1,m1},{s2,p2,m2},iWM[mtx1]] *
+			Hold[ReplaceAll][
+				WeylLine[{s4,p2,m2},{s3,p3,m3},iWM@@Reverse[List[mtx2]]
+				], {iLTS->iLTSB,iLTSB->iLTS}],
+	WeylLine[{s1_,p1_,m1_},{s2_,p2_,m2_},iWM[mtx1___]] *
+	WeylLine[{s3_,p1_,m1_},{s4_,p4_,m4_},iWM[mtx2___]] :>
+		(-1)^(Length[List[mtx2]]+1) *
+		WeylLine[{s1,p1,m1},{s2,p2,m2},iWM[mtx1]] *
+			Hold[ReplaceAll][
+				WeylLine[{s4,p4,m4},{s3,p1,m1},iWM@@Reverse[List[mtx2]]
+				], {iLTS->iLTSB,iLTSB->iLTS}]
+}]
+
+(* WeylLineCollapse[expr]
+	Collapses two compatible adjacent WeylLines into one WeylLine. Compatible
+	WeylLines are of the form:
+		WeylLine[wfl,{s1,p,m},X] * WeylLine[{s2,p,m},wfr,Y]
+	These are converted into
+		WeylLine[wfl,wfr,X.Y]
+*)
+WeylLineCollapse[expr___]:= expr/.{
+	(* ...X xd x Y... *)
+	WeylLine[{s1_,p1_,m1_},{1,p2_,m2_},
+		iWM[left___,pat1:Weyl1Bar|iLTS[mu_]]
+	] *
+	WeylLine[{1,p2_,m2_},{s4_,p4_,m4_},
+		iWM[pat2:Weyl1|iLTS[nu_],right___]
+	] :>
+	WeylLine[{s1,p1,m1},{s4,p4,m4},
+		iWM[left,pat1,LDot[p2, WeylSBar],pat2,right]
+	],
+	(* ...X x xd Y... *)
+	WeylLine[{s1_,p1_,m1_},{1,p2_,m2_},
+		iWM[left___,pat1:Weyl1|iLTSB[mu_]]
+	] *
+	WeylLine[{1,p2_,m2_},{s4_,p4_,m4_},
+		iWM[pat2:Weyl1Bar|iLTSB[nu_],right___]
+	] :>
+	WeylLine[{s1,p1,m1},{s4,p4,m4},
+		iWM[left,pat1,LDot[p2, WeylS],pat2,right]
+	],
+
+
+	(* ...X yd y Y... *)
+	WeylLine[{s1_,p1_,m1_},{-1,p2_,m2_},
+		iWM[left___,pat1:Weyl1Bar|iLTS[mu_]]
+	] *
+	WeylLine[{-1,p2_,m2_},{s4_,p4_,m4_},
+		iWM[pat2:Weyl1|iLTS[nu_],right___]
+	] :>
+	WeylLine[{s1,p1,m1},{s4,p4,m4},
+		iWM[left,pat1,LDot[p2, WeylSBar],pat2,right]
+	],
+	(* ...X y yd Y... *)
+	WeylLine[{s1_,p1_,m1_},{-1,p2_,m2_},
+		iWM[left___,pat1:Weyl1|iLTSB[mu_]]
+	] *
+	WeylLine[{-1,p2_,m2_},{s4_,p4_,m4_},
+		iWM[pat2:Weyl1Bar|iLTSB[nu_],right___]
+	] :>
+	WeylLine[{s1,p1,m1},{s4,p4,m4},
+		iWM[left,pat1,LDot[p2, WeylS],pat2,right]
+	],
+
+
+	(* ...X x y Y... *)
+	WeylLine[{s1_,p1_,m1_},{1,p2_,m2_},
+		iWM[left___,pat1:Weyl1|iLTSB[mu_]]
+	] *
+	WeylLine[{-1,p2_,m2_},{s4_,p4_,m4_},
+		iWM[pat2:Weyl1|iLTS[nu_],right___]
+	] :>
+	WeylLine[{s1,p1,m1},{s4,p4,m4},
+		iWM[left,pat1,m2*Weyl1,pat2,right]
+	],
+	(* ...X y x Y... *)
+	WeylLine[{s1_,p1_,m1_},{-1,p2_,m2_},
+		iWM[left___,pat1:Weyl1|iLTSB[mu_]]
+	] *
+	WeylLine[{1,p2_,m2_},{s4_,p4_,m4_},
+		iWM[pat2:Weyl1|iLTS[nu_],right___]
+	] :>
+	WeylLine[{s1,p1,m1},{s4,p4,m4},
+		iWM[left,pat1,-m2*Weyl1,pat2,right]
+	],
+
+
+	(* ...X yd xd Y... *)
+	WeylLine[{s1_,p1_,m1_},{-1,p2_,m2_},
+		iWM[left___,pat1:Weyl1Bar|iLTS[mu_]]
+	] *
+	WeylLine[{1,p2_,m2_},{s4_,p4_,m4_},
+		iWM[pat2:Weyl1Bar|iLTSB[nu_],right___]
+	] :>
+	WeylLine[{s1,p1,m1},{s4,p4,m4},
+		iWM[left,pat1,m2*Weyl1Bar,pat2,right]
+	],
+	(* ...X xd yd Y... *)
+	WeylLine[{s1_,p1_,m1_},{1,p2_,m2_},
+		iWM[left___,pat1:Weyl1Bar|iLTS[mu_]]
+	] *
+	WeylLine[{-1,p2_,m2_},{s4_,p4_,m4_},
+		iWM[pat2:Weyl1Bar|iLTSB[nu_],right___]
+	] :>
+	WeylLine[{s1,p1,m1},{s4,p4,m4},
+		iWM[left,pat1,-m2*Weyl1Bar,pat2,right]
 	]
-] := Module[{wl,WM,LTS,LTSB,WMSS,WMSSB,WMSBS,WMSBSB},
-	wl=WeylLine[wf1, wf2, WM[mtx]];
+};
 
-	wl=wl/.{LTensor[WeylS, mu_]:>LTS[mu]};
-	wl=wl/.{LTensor[WeylSBar, mu_]:>LTSB[mu]};
-	wl=wl/.{WeylMatrix[a___]:>WM[a]};
 
-	wl=wl/.{
-		WM[c1_. Weyl1 + a1_.] :> WMSSB[c1 * Weyl1 + a1],
-		WM[c1_. Weyl1Bar + a1_.] :> WMSBS[c1 * Weyl1Bar + a1]
-	};
+WeylLineToTrace[expr___]:=expr/.{
+	(* x.x =0 *)
+	WeylLine[{1,p_,m_},{1,p_,m_},iWM[Weyl1]]:> 0,
+	(* y.y =0 *)
+	WeylLine[{-1,p_,m_},{-1,p_,m_},iWM[Weyl1]]:> 0,
+	(* x.y *)
+	WeylLine[{1,p_,m_},{-1,p_,m_},iWM[Weyl1]]:> 2*m,
+	(* y.x *)
+	WeylLine[{-1,p_,m_},{1,p_,m_},iWM[Weyl1]]:> -2*m,
 
-	wl=wl//.{
-		(* Replace WM[WeylS] with WMSS[WeylS] *)
-		WM[c1_. LTS[mu1_] + a1_.] :> WMSS[c1 * LTS[mu1] + a1],
-		(* Replace WM[WeylSBar] with WMSBSB[WeylSBar] *)
-		WM[c1_. LTSB[mu1_] + a1_.] :> WMSBSB[c1 * LTSB[mu1] + a1],
-		(* Replace WM[WeylS,...,WeylS] with WMSS[WeylS,...,WeylS] *)
-		WM[c1_. LTS[mu1_] + a1_., a2___, c2_. LTS[mu2_] + a3_.] :>
-			WMSS[c1 * LTS[mu1] + a1, a2, c2 * LTS[mu2] + a3],
-		(* Replace WM[WeylS,...,WeylSBar] with WMSSB[WeylS,...,WeylSBar] *)
-		WM[c1_. LTS[mu1_] + a1_., a2___, c2_. LTSB[mu2_] + a3_.] :>
-			WMSSB[c1 * LTS[mu1] + a1, a2, c2 * LTSB[mu2] + a3],
-		(* Replace WM[WeylSBar,...,WeylS] with WMSBS[WeylSBar,...,WeylS] *)
-		WM[c1_. LTSB[mu1_] + a1_., a2___, c2_. LTS[mu2_] + a3_.] :>
-			WMSBS[c1 * LTSB[mu1] + a1, a2, c2 * LTS[mu2] + a3],
-		(* Replace WM[WeylSBar,...,WeylSBar] with WMSBSB[WeylSB,...,WeylSBar] *)
-		WM[c1_. LTSB[mu1_] + a1_., a2___, c2_. LTSB[mu2_] + a3_.] :>
-			WMSBSB[c1 * LTSB[mu1] + a1, a2, c2 * LTSB[mu2] + a3]
-	};
+	(* xd.xd =0 *)
+	WeylLine[{1,p_,m_},{1,p_,m_},iWM[Weyl1Bar]]:> 0,
+	(* yd.yd =0 *)
+	WeylLine[{-1,p_,m_},{-1,p_,m_},iWM[Weyl1Bar]]:> 0,
+	(* xd.yd *)
+	WeylLine[{1,p_,m_},{-1,p_,m_},iWM[Weyl1Bar]]:> -2*m,
+	(* yd.xd *)
+	WeylLine[{-1,p_,m_},{1,p_,m_},iWM[Weyl1Bar]]:> 2*m,
 
-	wl=wl/.{
-		WeylLine[{1,p1_,m1_}, {1,p2_,m2_},WMSS[a___]]:>
-			WeylLine[{"x",p1,m1},WM[a],{"xd",p2,m2}],
-		WeylLine[{1,p1_,m1_}, {1,p2_,m2_}, WMSSB[a___]]:>
-			WeylLine[{"x",p1,m1},WM[a],{"x",p2,m2}],
-		WeylLine[{1,p1_,m1_}, {1,p2_,m2_}, WMSBS[a___]]:>
-			WeylLine[{"xd",p1,m1},WM[a],{"xd",p2,m2}],
-		WeylLine[{1,p1_,m1_}, {1,p2_,m2_}, WMSBSB[a___]]:>
-			WeylLine[{"xd",p1,m1},WM[a],{"x",p2,m2}],
+	(* xd.Sb_mu.x *)
+	WeylLine[{1,p_,m_},{1,p_,m_},iWM[iLTSB[mu_]]]:>
+		WeylTrace[ConvertToExternal[iWM[iLTSB[mu],LDot[p,WeylS]]]],
+	(* x.S_mu.xd *)
+	WeylLine[{1,p_,m_},{1,p_,m_},iWM[iLTS[mu_]]]:>
+		WeylTrace[ConvertToExternal[iWM[iLTS[mu],LDot[p,WeylSBar]]]],
+	(* yd.Sb_mu.y *)
+	WeylLine[{-1,p_,m_},{-1,p_,m_},iWM[iLTSB[mu_]]]:>
+		WeylTrace[ConvertToExternal[iWM[iLTSB[mu],LDot[p,WeylS]]]],
+	(* y.S_mu.yd *)
+	WeylLine[{-1,p_,m_},{-1,p_,m_},iWM[iLTS[mu_]]]:>
+		WeylTrace[ConvertToExternal[iWM[iLTS[mu],LDot[p,WeylSBar]]]],
 
-		WeylLine[{1,p1_,m1_}, {-1,p2_,m2_}, WMSS[a___]]:>
-			WeylLine[{"x",p1,m1},WM[a],{"yd",p2,m2}],
-		WeylLine[{1,p1_,m1_}, {-1,p2_,m2_}, WMSSB[a___]]:>
-			WeylLine[{"x",p1,m1},WM[a],{"y",p2,m2}],
-		WeylLine[{1,p1_,m1_}, {-1,p2_,m2_}, WMSBS[a___]]:>
-			WeylLine[{"xd",p1,m1},WM[a],{"yd",p2,m2}],
-		WeylLine[{1,p1_,m1_}, {-1,p2_,m2_}, WMSBSB[a___]]:>
-			WeylLine[{"xd",p1,m1},WM[a],{"y",p2,m2}],
 
-		WeylLine[{-1,p1_,m1_}, {1,p2_,m2_}, WMSS[a___]]:>
-			WeylLine[{"y",p1,m1},WM[a],{"xd",p2,m2}],
-		WeylLine[{-1,p1_,m1_}, {1,p2_,m2_}, WMSSB[a___]]:>
-			WeylLine[{"y",p1,m1},WM[a],{"x",p2,m2}],
-		WeylLine[{-1,p1_,m1_}, {1,p2_,m2_}, WMSBS[a___]]:>
-			WeylLine[{"yd",p1,m1},WM[a],{"xd",p2,m2}],
-		WeylLine[{-1,p1_,m1_}, {1,p2_,m2_}, WMSBSB[a___]]:>
-			WeylLine[{"yd",p1,m1},WM[a],{"x",p2,m2}],
+	(* x.X.y *)
+	WeylLine[{1,p_,m_},{-1,p_,m_},
+		iWM[pat1:iLTS[mu_]|Weyl1,cent__,pat2:iLTSB[nu_]|Weyl1]]:>
+		WeylTrace[ConvertToExternal[iWM[pat1,cent,pat2,-m*Weyl1]]],
+	(* xd.X.yd *)
+	WeylLine[{1,p_,m_},{-1,p_,m_},
+		iWM[pat1:iLTSB[mu_]|Weyl1Bar,cent__,pat2:iLTS[nu_]|Weyl1Bar]]:>
+		WeylTrace[ConvertToExternal[iWM[pat1,cent,pat2,m*Weyl1Bar]]],
+	(* y.X.x *)
+	WeylLine[{-1,p_,m_},{1,p_,m_},
+		iWM[pat1:iLTS[mu_]|Weyl1,cent__,pat2:iLTSB[nu_]|Weyl1]]:>
+		WeylTrace[ConvertToExternal[iWM[pat1,cent,pat2,m*Weyl1]]],
+	(* yd.X.xd *)
+	WeylLine[{-1,p_,m_},{1,p_,m_},
+		iWM[pat1:iLTSB[mu_]|Weyl1Bar,cent__,pat2:iLTS[nu_]|Weyl1Bar]]:>
+		WeylTrace[ConvertToExternal[iWM[pat1,cent,pat2,-m*Weyl1Bar]]],
 
-		WeylLine[{-1,p1_,m1_}, {-1,p2_,m2_}, WMSS[a___]]:>
-			WeylLine[{"y",p1,m1},WM[a],{"yd",p2,m2}],
-		WeylLine[{-1,p1_,m1_}, {-1,p2_,m2_}, WMSSB[a___]]:>
-			WeylLine[{"y",p1,m1},WM[a],{"y",p2,m2}],
-		WeylLine[{-1,p1_,m1_}, {-1,p2_,m2_}, WMSBS[a___]]:>
-			WeylLine[{"yd",p1,m1},WM[a],{"yd",p2,m2}],
-		WeylLine[{-1,p1_,m1_}, {-1,p2_,m2_}, WMSBSB[a___]]:>
-			WeylLine[{"yd",p1,m1},WM[a],{"y",p2,m2}]
-	};
+	(* xd.X.x *)
+	WeylLine[{1,p_,m_},{1,p_,m_},
+		iWM[pat1:iLTSB[mu_]|Weyl1Bar,cent__,pat2:iLTSB[nu_]|Weyl1]]:>
+		WeylTrace[ConvertToExternal[iWM[pat1,cent,pat2,LDot[p,WeylS]]]],
+	(* yd.X.y *)
+	WeylLine[{-1,p_,m_},{-1,p_,m_},
+		iWM[pat1:iLTSB[mu_]|Weyl1Bar,cent__,pat2:iLTSB[nu_]|Weyl1]]:>
+		WeylTrace[ConvertToExternal[iWM[pat1,cent,pat2,LDot[p,WeylS]]]],
+	(* x.X.xd *)
+	WeylLine[{1,p_,m_},{1,p_,m_},
+		iWM[pat1:iLTS[mu_]|Weyl1,cent__,pat2:iLTS[nu_]|Weyl1Bar]]:>
+		WeylTrace[ConvertToExternal[iWM[pat1,cent,pat2,LDot[p,WeylSBar]]]],
+	(* y.X.yd *)
+	WeylLine[{-1,p_,m_},{-1,p_,m_},
+		iWM[pat1:iLTS[mu_]|Weyl1,cent__,pat2:iLTS[nu_]|Weyl1Bar]]:>
+		WeylTrace[ConvertToExternal[iWM[pat1,cent,pat2,LDot[p,WeylSBar]]]]
+};
 
-	wl=wl/.{LTS[mu__]:>LTensor[WeylS,mu]};
-	wl=wl/.{LTSB[mu__]:>LTensor[WeylSBar,mu]};
-	wl=wl/.{WM[a___]:>WeylMatrix[a]};
-	wl
+
+InternalFermionSpinSum[expr___]:=Module[{iexpr},
+	iexpr=X`Utilities`Uncontract[#, WeylS|WeylSBar]&/@expr;
+	iexpr=WeylLineMetricContract[iexpr];
+	iexpr=WeylLineApplyVectorFierz[iexpr];
+	iexpr=WeylLinesRemoveZero[iexpr];
+	iexpr=WeylLineFixOrder[iexpr];
+	Print[];
+	Print[];
+	Print[iexpr];
+	Print[];
+	Print[];
+	iexpr=FixedPoint[WeylLineCollapse,iexpr];
+	iexpr=X`Utilities`Uncontract[#, WeylS|WeylSBar]&/@iexpr;
+	(*Print[iexpr];*)
+	FixedPoint[WeylLineToTrace,iexpr]
 ];
 
 
-InternalFermionSpinSum[WeylLine[l1___],WeylLine[l2___]]:=Module[{wl1,wl2,prod,WFP,LD},
+FermionSpinSum[expr_]:=Module[{iexpr},
+	(*
+	iexpr=PreprocessWeylProducts[ExpandAll[expr]];
 
-	LD[a_,b_]:=LDot[a,b];
-	wl1=ConvertWeylLine[WeylLine[l1]];
-	wl2=ConvertWeylLine[WeylLine[l2]];
-
-	prod={wl1,wl2}/.{
-		{WeylLine[{s1_,p1_,m1_},WeylMatrix[a___],{s2_,p2_,m2_}],
-		 WeylLine[{s3_,p2_,m2_},WeylMatrix[b___],{s4_,p1_,m1_}]} :>
-		WeylMatrix[a,WFP[s2<>s3,p2,m2],b,WFP[s4<>s1,p1,m1]]
-	};
-
-	prod=prod//.{
-		WeylMatrix[a___,WFP["xxd",p_,m_],b___]:>WeylMatrix[a,LD[WeylS,p],b],
-		WeylMatrix[a___,WFP["xdx",p_,m_],b___]:>WeylMatrix[a,LD[WeylSBar,p],b],
-		WeylMatrix[a___,WFP["yyd",p_,m_],b___]:>WeylMatrix[a,LD[WeylS,p],b],
-		WeylMatrix[a___,WFP["ydy",p_,m_],b___]:>WeylMatrix[a,LD[WeylSBar,p],b],
-		WeylMatrix[a___,WFP["xy",p_,m_],b___]:>WeylMatrix[a,m*Weyl1,b],
-		WeylMatrix[a___,WFP["xdyd",p_,m_],b___]:>WeylMatrix[a,-m*Weyl1,b],
-		WeylMatrix[a___,WFP["yx",p_,m_],b___]:>WeylMatrix[a,-m*Weyl1,b],
-		WeylMatrix[a___,WFP["ydxd",p_,m_],b___]:>WeylMatrix[a,m*Weyl1,b]
-	};
-
-	WeylTrace[prod]
-];
-
-
-FermionSpinSum[exp_]:=Module[{iexp,lines,nlines,coeffs},
-
-	ExpandAll[exp]/.{
+	iexpr/.{
 		WeylLine[{s1_,p1_,m1_},{s2_,p2_,m2_},WeylMatrix[mtx1___]] *
 		WeylLine[{s3_,p2_,m2_},{s4_,p1_,m1_}, WeylMatrix[mtx2___]] :>
 		InternalFermionSpinSum[
 			WeylLine[{s1,p1,m1},{s2,p2,m2},WeylMatrix[mtx1]],
 			WeylLine[{s3,p2,m2},{s4,p1,m1},WeylMatrix[mtx2]]
 		]
-	}
+	}*)
+	iexpr=ExpandAll[ConvertToInternal[expr]];
+	iexpr=FixedPoint[InternalFermionSpinSum,iexpr];
+	ConvertToExternal[iexpr]
 ]
 
 End[]

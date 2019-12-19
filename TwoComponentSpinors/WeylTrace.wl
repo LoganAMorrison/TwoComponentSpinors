@@ -61,41 +61,48 @@ ValidateWeylMatrix[WeylMatrix[args___]]:=Module[{expr,iargs},
     (* check for WeylMatrix[...,WeylS, WeylS,...]*)
     If[MatchQ[expr,
         WeylMatrix[left___,iLTS[_],iLTS[_],right___]],
-        Message[WeylTrace::InvalidSpinorStructureSS];Abort[];
+        Message[WeylTrace::InvalidSpinorStructureSS];
+        Print[WeylMatrix@@args];Abort[];
     ];
     (* check for WeylMatrix[...,WeylSBar, WeylSBar,...]*)
     If[MatchQ[expr,
         WeylMatrix[left___,iLTSB[_],iLTSB[_],right___]],
-        Message[WeylTrace::InvalidSpinorStructureWelySBSB];Abort[];
+        Message[WeylTrace::InvalidSpinorStructureWelySBSB];
+        Print[WeylMatrix[args]];Abort[];
     ];
 
     (* check for WeylMatrix[...,WeylSBar, Weyl1Bar,...]*)
     If[MatchQ[expr,
         WeylMatrix[left___,iLTSB[_],Weyl1Bar,right___]],
-        Message[WeylTrace::InvalidSpinorStructureSB1B];Abort[];
+        Message[WeylTrace::InvalidSpinorStructureSB1B];
+        Print[WeylMatrix[args]];Abort[];
     ];
 
     (* check for WeylMatrix[...,WeylS, Weyl1, WeylSBar,...]*)
     If[MatchQ[expr,
         WeylMatrix[left___,iLTS[_],Weyl1,right___]],
-        Message[WeylTrace::InvalidSpinorStructureS1];Abort[];
+        Message[WeylTrace::InvalidSpinorStructureS1];
+        Print[WeylMatrix[args]];Abort[];
     ];
 
     (* check for WeylMatrix[...,Weyl1, Weyl1Bar,...]*)
     If[MatchQ[expr,
         WeylMatrix[left___,Weyl1,Weyl1Bar,right___]],
-        Message[WeylTrace::InvalidSpinorStructure11B];Abort[];
+        Message[WeylTrace::InvalidSpinorStructure11B];
+        Print[WeylMatrix[args]];Abort[];
     ];
     (* check for WeylMatrix[...,Weyl1Bar, Weyl1,...]*)
     If[MatchQ[expr,
         WeylMatrix[left___,Weyl1Bar,Weyl1,right___]],
-        Message[WeylTrace::InvalidSpinorStructure1B1];Abort[];
+        Message[WeylTrace::InvalidSpinorStructure1B1];
+        Print[WeylMatrix[args]];Abort[];
     ];
 
     iargs=DeleteCases[List[args], Weyl1|Weyl1Bar];
     (* throw if there are an odd number of pauli matrices *)
     If[OddQ[Length[iargs]],
-        Message[WeylTrace::InvalidOddNumWeylArgs];Abort[];
+        Message[WeylTrace::InvalidOddNumWeylArgs];
+        Print[WeylMatrix[args]];Abort[];
     ];
 
     Return["Valid"];
@@ -114,7 +121,9 @@ WeylTrace[WeylMatrix[args___]]:=Module[{exp,clist,wlist,i},
     (* pull out constants *)
     exp=exp//.{
         WM[left___, a__ * iLTS[mu_], right___] :> a * WM[left, iLTS[mu], right],
-        WM[left___, a__ * iLTSB[mu_], right___] :> a * WM[left, iLTSB[mu], right]
+        WM[left___, a__ * iLTSB[mu_], right___] :> a * WM[left, iLTSB[mu], right],
+        WM[left___, a__ * Weyl1, right___] :> a * WM[left, Weyl1, right],
+        WM[left___, a__ * Weyl1Bar, right___] :> a * WM[left, Weyl1Bar, right]
     };
 
 	(* put
