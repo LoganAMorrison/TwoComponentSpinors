@@ -103,4 +103,22 @@ CurrentValue[$FrontEndSession, {InputAliases, "ryd"}] = RowBox[{
 
 
 
+
+(*
+WeylLine /: MakeBoxes[
+    WeylLine[{sp2:1|-1,kin2__},{sp1:1|1,kin1__},
+    WeylMatrix[mtx__]],StandardForm]:=
+	  With[{sf1=Switch[sp1,1,"\[ScriptU]",-1,"\[ScriptV]"],
+			sf2=Switch[sp2,1,"\[ScriptU]",-1,"\[ScriptV]"]},
+		RowBox[{"\[LeftAngleBracket]",RowBox[{sf2,"[",X`Internal`ToRowBox[{kin2}],"]"}],",",Sequence@@Riffle[Map[Function[{item},MakeBoxes[item,StandardForm],{HoldAllComplete}],Unevaluated[{mtx}]],","],",",RowBox[{sf1,"[",X`Internal`ToRowBox[{kin1}],"]"}],"\[RightAngleBracket]"}]
+	  ];
+
+FermionLine /: MakeBoxes[FermionLine[{sp2:1|-1,kin2__},{sp1:1|-1,kin1__},DiracMatrix[]],StandardForm]:=
+	  With[{sf1=Switch[sp1,1,"\[ScriptU]",-1,"\[ScriptV]"],
+			sf2=Switch[sp2,1,"\[ScriptU]",-1,"\[ScriptV]"]},
+		RowBox[{"\[LeftAngleBracket]",RowBox[{sf2,"[",X`Internal`ToRowBox[{kin2}],"]"}],",",RowBox[{sf1,"[",X`Internal`ToRowBox[{kin1}],"]"}],"\[RightAngleBracket]"}]
+	  ];
+*)
+
+
 End[]

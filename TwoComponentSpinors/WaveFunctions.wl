@@ -18,6 +18,19 @@ PolarizationVector::usage="Polarization[k, m]";
 PolarizationVectorDag::usage="PolarizationVectorDag[k,m]";
 
 Begin["Private`"]
+(*
+CurrentValue[$FrontEndSession, {InputAliases, "sb"}] = RowBox[{
+    OverscriptBox["\[Sigma]", "_"]
+}]
+*)
+
+CurrentValue[$FrontEndSession, {InputAliases, "pol"}] = RowBox[{
+    "\[ScriptE]", "[",
+    RowBox[{
+        "\[SelectionPlaceholder]", ",", "\[Placeholder]"
+        }],
+        "]"
+}]
 
 
 End[]

@@ -29,13 +29,20 @@ HermitianConjugate[expr_, OptionsPattern[]]:= Module[{iexpr,cvars},
 	(* make replacement list for complex valiables *)
 	cvars=Join[{I->-I,-I->I},Table[cvar -> Conjugate[cvar], {cvar, cvars}]];
 
-	iexpr=expr/.{Weyl1->Weyl1Bar, Weyl1Bar->Weyl1};
-	iexpr=iexpr/.{
+	iexpr=expr/.{
 		PolarizationVector[p_,m_]:>PolarizationVectorDag[p,m],
 		PolarizationVectorDag[p_,m_]:>PolarizationVector[p,m]
 	};
-	iexpr=iexpr/.{WeylMatrix[a___]:>WeylMatrix@@Reverse[List[a]]};
-	iexpr=iexpr/.{WeylLine[a_List,b_List,c_WeylMatrix]:>WeylLine[b,a,c]};
+	iexpr=iexpr/.{
+		(pat:WeylMatrixL|WeylMatrixR)[a___] :>
+			(If[EvenQ[Count[List[a],WeylS]], pat,
+				Switch[pat,WeylMatrixL,WeylMatrixR,WeylMatrixR,WeylMatrixL]]
+			)@@Reverse[List[a]]
+	};
+	iexpr=iexpr/.{
+		WeylLine[a_List,b_List,(pat:WeylMatrixL|WeylMatrixR)[mtx___]] :>
+			WeylLine[b,a,pat[mtx]]
+	};
 	iexpr/.cvars
 ]
 

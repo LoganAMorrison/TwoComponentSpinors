@@ -13,9 +13,7 @@ BeginPackage["TwoComponentSpinors`"]
 
 (* Pauli matrices *)
 WeylS::usage="WeylS represents the Pauli matrix in two-component spinor space";
-WeylSBar::usage="WeylSBar represents the barred Pauli matrix in two-component spinor space";
 Weyl1::usage="Weyl1 represents the unit matrix in two-component spinor space";
-Weyl1Bar::usage="Weyl1 represents the unit matrix in two-component spinor space";
 
 Begin["Private`"]
 

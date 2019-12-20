@@ -31,7 +31,7 @@ PolarizationSum[exp_, k_]:=Module[{uncontracted,PV,PVDD,LT,kbar},
 
 	(* *)
 	LT[x__] := LTensor[x];
-	LD[x__] := LDOT[x];
+	LD[x__] := LDot[x];
 	kbar = Bar[k];
 
 	ReplaceAll[uncontracted,{
