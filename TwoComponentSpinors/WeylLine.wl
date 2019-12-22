@@ -155,6 +155,6 @@ WeylLineProduct /: Times[
     WeylLineProduct[lines1,lines2];
 
 
-WeylLineProduct  /: MakeBoxes[WeylLineProduct[lines___],StandardForm]:=Sequence@@Riffle[Map[Function[{item},MakeBoxes[item,StandardForm],{HoldAllComplete}],Unevaluated[{lines}]],"\[CircleTimes]"];
+WeylLineProduct  /: MakeBoxes[WeylLineProduct[lines___],StandardForm]:=RowBox[List@@Riffle[Map[Function[{item},MakeBoxes[item,StandardForm],{HoldAllComplete}],Unevaluated[{lines}]],"\[CircleTimes]"]];
 
 End[]
