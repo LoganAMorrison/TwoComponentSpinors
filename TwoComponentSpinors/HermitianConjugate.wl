@@ -17,6 +17,26 @@ Symbol's.";
 
 Begin["Private`"]
 
+HermitianConjugateWeylMatrix[(WM:WeylMatrixR|WeylMatrixL)[args___]]:=Module[{iexpr},
+	iexpr=ConvertToInternal[WeylMatrixExpand[WM[args]]];
+	(* check if expression is RR *)
+	If[Not[FreeQ[iexpr,iWMRR]],
+		Return[ConvertToExternal[iWMLL@@Reverse[List[args]]]]
+	];
+	(* check if expression is LL *)
+	If[Not[FreeQ[iexpr,iWMLL]],
+		Return[ConvertToExternal[iWMRR@@Reverse[List[args]]]]
+	];
+	(* check if expression is RL *)
+	If[Not[FreeQ[iexpr,iWMRL]],
+		Return[ConvertToExternal[iWMRL@@Reverse[List[args]]]]
+	];
+	(* check if expression is LR *)
+	If[Not[FreeQ[iexpr,iWMLR]],
+		Return[ConvertToExternal[iWMLR@@Reverse[List[args]]]]
+	];
+]
+
 Options[HermitianConjugate] = {
 	"ComplexSymbols" -> {}
 }
@@ -27,17 +47,18 @@ HermitianConjugate[expr_, OptionsPattern[]]:= Module[{iexpr,cvars},
 	(* Validate that "ComplexSymbols" is a list *)
 	If[Not[ListQ[cvars]], $Failed];
 	(* make replacement list for complex valiables *)
-	cvars=Join[{I->-I,-I->I},Table[cvar -> Conjugate[cvar], {cvar, cvars}]];
+	cvars=Table[cvar -> Conjugate[cvar], {cvar, cvars}];
 
-	iexpr=expr/.{
+	(* Change a+ib -> a-ib*)
+	iexpr=expr/.{Complex[a_,b_]:>Complex[a,-b]};
+
+	iexpr=iexpr/.{
 		PolarizationVector[p_,m_]:>PolarizationVectorDag[p,m],
 		PolarizationVectorDag[p_,m_]:>PolarizationVector[p,m]
 	};
 	iexpr=iexpr/.{
 		(pat:WeylMatrixL|WeylMatrixR)[a___] :>
-			(If[EvenQ[Count[List[a],WeylS]], pat,
-				Switch[pat,WeylMatrixL,WeylMatrixR,WeylMatrixR,WeylMatrixL]]
-			)@@Reverse[List[a]]
+			HermitianConjugateWeylMatrix[pat[a]]
 	};
 	iexpr=iexpr/.{
 		WeylLine[a_List,b_List,(pat:WeylMatrixL|WeylMatrixR)[mtx___]] :>

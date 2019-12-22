@@ -28,6 +28,12 @@ and \!\(\*SubscriptBox[\(sgn\), \(k\)]\)=-1 corresponds to RH spinors \
 (y or \!\(\*SuperscriptBox[\(y\), \(\[Dagger]\)]\),depending on \
 structure of WeylMatrix[...,\!\(\*SubscriptBox[\(mtx\), \(n\)]\)])";
 
+WeylLineProduct::usage = \
+"WeylLineProduct[\!\(\*SubscriptBox[\(wline\), \
+\(1\)]\),\!\(\*SubscriptBox[\(wline\), \(2\)]\)] represents the \
+direct product of WeylLine objects \!\(\*SubscriptBox[\(wline\), \
+\(1\)]\), \!\(\*SubscriptBox[\(wline\), \(2\)]\), etc.";
+
 Begin["Private`"]
 
 CurrentValue[$FrontEndSession, {InputAliases, "lx"}]= RowBox[{
@@ -62,8 +68,6 @@ CurrentValue[$FrontEndSession, {InputAliases, "lyd"}]= RowBox[{
         "\[Placeholder]",
         "]"
 }];
-
-
 CurrentValue[$FrontEndSession, {InputAliases, "rx"}] = RowBox[{
     "\[ScriptX]",
     "[",
@@ -72,7 +76,7 @@ CurrentValue[$FrontEndSession, {InputAliases, "rx"}] = RowBox[{
     "\[Placeholder]",
     "]",
     "\[RightAngleBracket]"
-}]
+}];
 CurrentValue[$FrontEndSession, {InputAliases, "ry"}] = RowBox[{
     "\[ScriptY]",
     "[",
@@ -81,7 +85,7 @@ CurrentValue[$FrontEndSession, {InputAliases, "ry"}] = RowBox[{
     "\[Placeholder]",
     "]",
     "\[RightAngleBracket]"
-}]
+}];
 CurrentValue[$FrontEndSession, {InputAliases, "rxd"}] = RowBox[{
     SuperscriptBox["\[ScriptX]","\[Dagger]"],
     "[",
@@ -90,7 +94,7 @@ CurrentValue[$FrontEndSession, {InputAliases, "rxd"}] = RowBox[{
     "\[Placeholder]",
     "]",
     "\[RightAngleBracket]"
-}]
+}];
 CurrentValue[$FrontEndSession, {InputAliases, "ryd"}] = RowBox[{
     SuperscriptBox["\[ScriptY]","\[Dagger]"],
     "[",
@@ -99,26 +103,58 @@ CurrentValue[$FrontEndSession, {InputAliases, "ryd"}] = RowBox[{
     "\[Placeholder]",
     "]",
     "\[RightAngleBracket]"
-}]
+}];
 
 
+WeylLine /: MakeBoxes[WeylLine[{sp1:1|-1,kin1__},{sp2:1|-1,kin2__},
+    (WM:WeylMatrixL|WeylMatrixR)[mtx___]],StandardForm]:= Module[{iexpr,sf1,sf2},
+
+    iexpr=ConvertToInternal[WeylMatrixExpand[WM[mtx]]];
+
+    If[Or[Not[FreeQ[iexpr,iWMRR]],Not[FreeQ[iexpr,iWMRL]]],
+        (* If matrix has left dotted index *)
+        sf1=Switch[sp1,
+            1,SuperscriptBox["\[ScriptX]","\[Dagger]"],
+            -1,SuperscriptBox["\[ScriptY]","\[Dagger]"]
+        ],
+        (* If matrix has left undotted index *)
+        sf1=Switch[sp1,1,"\[ScriptX]",-1,"\[ScriptY]"];
+    ];
+    If[Or[Not[FreeQ[iexpr,iWMRR]],Not[FreeQ[iexpr,iWMLR]]],
+        (* If matrix has right dotted index *)
+        sf2=Switch[sp2,
+            1,SuperscriptBox["\[ScriptX]","\[Dagger]"],
+            -1,SuperscriptBox["\[ScriptY]","\[Dagger]"]
+        ],
+        (* If matrix has right undotted index *)
+        sf2=Switch[sp2,1,"\[ScriptX]",-1,"\[ScriptY]"];
+    ];
+
+    RowBox[{"\[LeftAngleBracket]",RowBox[{sf1,"[",X`Internal`ToRowBox[{kin1}],"]"}],",",Sequence@@Riffle[Map[Function[{item},MakeBoxes[item,StandardForm],{HoldAllComplete}],Unevaluated[{mtx}]],","],",",RowBox[{sf2,"[",X`Internal`ToRowBox[{kin2}],"]"}],"\[RightAngleBracket]"}]
+];
 
 
-(*
-WeylLine /: MakeBoxes[
-    WeylLine[{sp2:1|-1,kin2__},{sp1:1|1,kin1__},
-    WeylMatrix[mtx__]],StandardForm]:=
-	  With[{sf1=Switch[sp1,1,"\[ScriptU]",-1,"\[ScriptV]"],
-			sf2=Switch[sp2,1,"\[ScriptU]",-1,"\[ScriptV]"]},
-		RowBox[{"\[LeftAngleBracket]",RowBox[{sf2,"[",X`Internal`ToRowBox[{kin2}],"]"}],",",Sequence@@Riffle[Map[Function[{item},MakeBoxes[item,StandardForm],{HoldAllComplete}],Unevaluated[{mtx}]],","],",",RowBox[{sf1,"[",X`Internal`ToRowBox[{kin1}],"]"}],"\[RightAngleBracket]"}]
-	  ];
+SetAttributes[WeylLineProduct,{Orderless}];
 
-FermionLine /: MakeBoxes[FermionLine[{sp2:1|-1,kin2__},{sp1:1|-1,kin1__},DiracMatrix[]],StandardForm]:=
-	  With[{sf1=Switch[sp1,1,"\[ScriptU]",-1,"\[ScriptV]"],
-			sf2=Switch[sp2,1,"\[ScriptU]",-1,"\[ScriptV]"]},
-		RowBox[{"\[LeftAngleBracket]",RowBox[{sf2,"[",X`Internal`ToRowBox[{kin2}],"]"}],",",RowBox[{sf1,"[",X`Internal`ToRowBox[{kin1}],"]"}],"\[RightAngleBracket]"}]
-	  ];
-*)
+WeylLineProduct[]:=1;
 
+WeylLineProduct[left___,WeylLineProduct[ls___],right___]:=
+    WeylLineProduct[left,ls,right];
+
+(* Change products of WeylLine's into WeylLineProduct *)
+WeylLine /: Times[WeylLine[mtx1__],WeylLine[mtx2__]] :=
+    WeylLineProduct[WeylLine[mtx1],WeylLine[mtx2]];
+
+(* Change product of WeylLine with WeylLineProduct into WeylLineProduct *)
+WeylLine /: Times[WeylLineProduct[lines__],WeylLine[mtx1__]] :=
+    WeylLineProduct[lines,WeylLine[mtx1]];
+
+(* Change product of WeylLineProduct's into WeylLineProduct *)
+WeylLineProduct /: Times[
+    WeylLineProduct[lines1__],WeylLineProduct[lines2__]] :=
+    WeylLineProduct[lines1,lines2];
+
+
+WeylLineProduct  /: MakeBoxes[WeylLineProduct[lines___],StandardForm]:=Sequence@@Riffle[Map[Function[{item},MakeBoxes[item,StandardForm],{HoldAllComplete}],Unevaluated[{lines}]],"\[CircleTimes]"];
 
 End[]

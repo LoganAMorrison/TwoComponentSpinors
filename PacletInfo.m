@@ -10,7 +10,24 @@ Paclet[
   Creator -> "",
   Extensions ->
   	{
-  		{"Kernel", Root -> FileNameJoin[{"TwoComponentSpinors", "Kernel"}], Context -> {"TwoComponentSpinors`"}},
-  		{"Documentation", Language -> "English", MainPage -> "Guides/TwoComponentSpinors"}
+  		{ (* Location of the Kernel *)
+            "Kernel",
+            Root -> FileNameJoin[{"TwoComponentSpinors", "Kernel"}],
+            Context -> {"TwoComponentSpinors`"}
+        },
+        { (* Testing Files *)
+            "Resource",
+            Root->"Tests",
+            Resources->{
+                "WeylTrace.wl",
+                "WeylLine.wl",
+                "FermionSpinSum.wl"
+            }
+        },
+  		{ (* Documentation files *)
+            "Documentation",
+            Language -> "English",
+            MainPage -> "Guides/TwoComponentSpinors"
+        }
   	}
 ]
