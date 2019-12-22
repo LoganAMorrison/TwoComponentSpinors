@@ -14,15 +14,9 @@ SpinorX::usage="SpinorX[p, m] represents the x spinor wave-function with momentu
 
 SpinorY::usage="SpinorY[p, m] represents the y spinor wave-function with momentum p and mass m";
 
-PolarizationVector::usage="Polarization[k, m]";
-PolarizationVectorDag::usage="PolarizationVectorDag[k,m]";
+PolarizationVector::usage="Polarization[k, m] represents a wavefunction \ polarization vector for a vector boson with momentum k and mass m.";
 
 Begin["Private`"]
-(*
-CurrentValue[$FrontEndSession, {InputAliases, "sb"}] = RowBox[{
-    OverscriptBox["\[Sigma]", "_"]
-}]
-*)
 
 CurrentValue[$FrontEndSession, {InputAliases, "pol"}] = RowBox[{
     "\[ScriptE]", "[",

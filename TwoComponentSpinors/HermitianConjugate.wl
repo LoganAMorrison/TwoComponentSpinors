@@ -53,8 +53,7 @@ HermitianConjugate[expr_, OptionsPattern[]]:= Module[{iexpr,cvars},
 	iexpr=expr/.{Complex[a_,b_]:>Complex[a,-b]};
 
 	iexpr=iexpr/.{
-		PolarizationVector[p_,m_]:>PolarizationVectorDag[p,m],
-		PolarizationVectorDag[p_,m_]:>PolarizationVector[p,m]
+		PolarizationVector[p_,m_]:>Conjugate[PolarizationVector[p,m]]
 	};
 	iexpr=iexpr/.{
 		(pat:WeylMatrixL|WeylMatrixR)[a___] :>

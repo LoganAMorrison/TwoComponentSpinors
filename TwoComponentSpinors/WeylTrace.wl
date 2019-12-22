@@ -23,33 +23,32 @@ encountered in WeylTrace[...].";
 
 Begin["Private`"]
 
-WeylTraceInternal[(WM:iWMLL|iWMRR)[args___]]:=Module[{mu},
-    mu=Unique["mu$"];
-    ReplaceAll[WM[args],{
-        (* base case of Tr[1] *)
-        WM[] :> 2,
-		(* base case of Tr[s, sb] or Tr[sb, s] *)
-		WM[ iLTS[mu1_], iLTS[mu2_] ] :> 2 * LTensor[MetricG, mu1, mu2],
-		(* base case of Tr[sb, s, sb, s] or Tr[s, sb, s, sb] *)
-		WM[ iLTS[mu1_], iLTS[mu2_], iLTS[mu3_], iLTS[mu4_] ] :>
-        2 * (
-			LTensor[MetricG, mu1, mu2]*LTensor[MetricG, mu3, mu4] -
-			LTensor[MetricG, mu1, mu3]*LTensor[MetricG, mu2, mu4] +
-			LTensor[MetricG, mu1, mu4]*LTensor[MetricG, mu2, mu3] +
-            Switch[WM,iWMLL,1,iWMRR,-1] *
-			I * LTensor[LeviCivitaE, mu1, mu2, mu3, mu4]
-		),
-		(* reduce Tr[X, s, sb, s] or Tr[X, sb, s, sb] to sum of Tr[X, s(b)] *)
-		WM[left__, iLTS[mu1_], iLTS[mu2_], iLTS[mu3_]] :>
-        (
-			LTensor[MetricG, mu1, mu2] * WM[left, iLTS[mu3]] -
-			LTensor[MetricG, mu1, mu3] * WM[left, iLTS[mu2]] +
-			LTensor[MetricG, mu2, mu3] * WM[left, iLTS[mu1]] +
-            Switch[WM,iWMLL,-1,iWMRR,1] *
-			I * LTensor[LeviCivitaE, mu1, mu2, mu3, mu] * WM[left, iLTS[mu]]
-		)
-    }]
-];
+(* base case of Tr[1] *)
+WeylTraceInternal[(WM:iWMLL|iWMRR)[]] := 2;
+(* base case of Tr[s, sb] or Tr[sb, s] *)
+WeylTraceInternal[(WM:iWMLL|iWMRR)[iLTS[mu1_], iLTS[mu2_]]] :=
+    2 * LTensor[MetricG, mu1, mu2];
+(* base case of Tr[sb, s, sb, s] or Tr[s, sb, s, sb] *)
+WeylTraceInternal[
+    (WM:iWMLL|iWMRR)[iLTS[mu1_], iLTS[mu2_], iLTS[mu3_], iLTS[mu4_]]]:=
+    2 * (
+		LTensor[MetricG, mu1, mu2]*LTensor[MetricG, mu3, mu4] -
+		LTensor[MetricG, mu1, mu3]*LTensor[MetricG, mu2, mu4] +
+		LTensor[MetricG, mu1, mu4]*LTensor[MetricG, mu2, mu3] +
+        Switch[WM,iWMLL,1,iWMRR,-1] *
+		I * LTensor[LeviCivitaE, mu1, mu2, mu3, mu4]
+	);
+(* reduce Tr[X, s, sb, s] or Tr[X, sb, s, sb] to sum of Tr[X, s(b)] *)
+WeylTraceInternal[
+    (WM:iWMLL|iWMRR)[left__,iLTS[mu1_], iLTS[mu2_], iLTS[mu3_]]] :=
+    With[{mu=Unique["mu$"]},
+        LTensor[MetricG, mu1, mu2] * WeylTraceInternal[WM[left, iLTS[mu3]]] -
+        LTensor[MetricG, mu1, mu3] * WeylTraceInternal[WM[left, iLTS[mu2]]] +
+        LTensor[MetricG, mu2, mu3] * WeylTraceInternal[WM[left, iLTS[mu1]]] +
+        Switch[WM,iWMLL,-1,iWMRR,1] *
+        I * LTensor[LeviCivitaE, mu1, mu2, mu3, mu] *
+        WeylTraceInternal[WM[left, iLTS[mu]]]
+    ];
 
 WeylTrace[(WM:WeylMatrixL|WeylMatrixR)[args___]]:=Module[{iexpr},
     iexpr=ConvertToInternal[WeylMatrixExpand[WM[args]]];
@@ -59,28 +58,12 @@ WeylTrace[(WM:WeylMatrixL|WeylMatrixR)[args___]]:=Module[{iexpr},
         Message[WeylTrace::InvalidOddNumWeylArgs];Abort[];
     ];
     (* apply WeylTraceInternal to all iWMLL and iWMRR *)
-    iexpr=iexpr//.{
+    iexpr=iexpr/.{
         mtx_iWMLL :> WeylTraceInternal[mtx],
         mtx_iWMRR :> WeylTraceInternal[mtx]
     };
     (* put coefficients back in *)
 	ConvertToExternal[iexpr]
 ];
-
-(* CODE THAT SHOULD BE TAKEN CARE OF BY WeylMatrixExpand
-
-uncontract sigma matrices
-iexpr=ConvertToInternal[X`Utilities`Uncontract[#, WeylS]&/@iexpr];
-
-split internal sums: Weyl[a+b,...] -> Weyl[a,...] + Weyl[b,...]
-iexpr=Distribute[iexpr, Plus, iWMLL];
-iexpr=Distribute[iexpr, Plus, iWMRR];
-
-pull out constants
-iexpr=iexpr//.{
-    (pat:iWMLL|iWMRR)[left___, a__ * iLTS[mu_], right___] :>
-        a * pat[left, iLTS[mu], right]
-};
-*)
 
 End[]

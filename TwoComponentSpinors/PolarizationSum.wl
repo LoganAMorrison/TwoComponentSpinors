@@ -9,42 +9,54 @@
 (* :Mathematica Version: 12.0 *)
 (* :Copyright: (c) 2019 ... *)
 
-PolarizationSum::usage="PolarizationSum[exp, k] Perform the sum over \
-polarization vectors corresponding to momentum k.";
+PolarizationSum::usage =
+  "PolarizationSum[exp, k] or PolarizationSum[exp, \
+{\!\(\*SubscriptBox[\(k\), \(1\)]\),...,\!\(\*SubscriptBox[\(k\), \(n\
+\)]\)}] performs the sum over polarizations for polarization vectors \
+k or \!\(\*SubscriptBox[\(k\), \(1\)]\),...,\!\(\*SubscriptBox[\(k\), \
+\(n\)]\).";
 
+(*
 Bar::usage="Bar[k] If k = (E, kk), then Bar[k] = (E, -kk) where kk is the \
 vector component of k.";
+*)
 
 Begin["Private`"]
 
-PolarizationSum[exp_, k_]:=Module[{uncontracted,PV,PVDD,LT,kbar},
+PolarizationSum[expr_, k_]:=Module[{iexpr},
 
-	uncontracted=X`Utilities`Uncontract[exp, k];
+	iexpr=X`Utilities`Uncontract[expr, k];
 
-	(* make internal replacements for massless pol. vectors *)
-	uncontracted=uncontracted/.{LTensor[PolarizationVector[k,0],mu_]:>PV[mu]};
-	uncontracted=uncontracted/.{LTensor[PolarizationVectorDag[k,0],mu_]:>PVDD[mu]};
-
-	(* make internal replacements for massive pol. vectors *)
-	uncontracted=uncontracted/.{LTensor[PolarizationVector[k,m_],mu_]:>PV[mu,m]};
-	uncontracted=uncontracted/.{LTensor[PolarizationVectorDag[k,m_],mu_]:>PVDD[mu,m]};
-
-	(* *)
-	LT[x__] := LTensor[x];
-	LD[x__] := LDot[x];
-	kbar = Bar[k];
-
-	ReplaceAll[uncontracted,{
+	ReplaceAll[iexpr,{
 		(* massless polarization spin sum *)
-		PV[mu1_] * PVDD[mu2_]:> (
-			-LT[MetricG,mu1,mu2]
-			+ (LT[k,mu1]*LT[kbar,mu2] + LT[k,mu2]*LT[kbar,mu1]) / LD[k, kbar]
-		),
+		LTensor[PolarizationVector[k,0],mu_] *
+		LTensor[Conjugate[PolarizationVector[k,0]],nu_] :>
+			-LTensor[MetricG,mu,nu],
 
 		(* massive polarization spin sum *)
-		PV[mu1_,m_] * PVDD[mu2_,m_]:>
-			-LT[MetricG,mu1,mu2] + LT[k,mu1]*LT[k,mu2] / m^2
+		LTensor[PolarizationVector[k,m_],mu_] *
+		LTensor[Conjugate[PolarizationVector[k,m_]],nu_]:>
+			-LTensor[MetricG,mu,nu] + LTensor[k,mu]*LTensor[k,nu] / m^2
 	}]
+]
+
+PolarizationSum[expr_,ks_List]:=Module[{iexpr,i},
+	iexpr=Expand[expr];
+	(* uncontract all momenta in ks*)
+	For[i=1,i<=Length[ks],i++,iexpr=X`Utilities`Uncontract[iexpr, ks[[i]]]];
+
+	iexpr//.{
+		(* massless polarization spin sum *)
+		LTensor[PolarizationVector[k_,0],mu_] *
+		LTensor[Conjugate[PolarizationVector[k_,0]],nu_] :>
+			-LTensor[MetricG,mu,nu]/;MemberQ[ks,k],
+
+		(* massive polarization spin sum *)
+		LTensor[PolarizationVector[k_,m_],mu_] *
+		LTensor[Conjugate[PolarizationVector[k_,m_]],nu_]:>
+			-LTensor[MetricG,mu,nu] +
+			LTensor[k,mu]*LTensor[k,nu] / m^2/;MemberQ[ks,k]
+	}
 ]
 
 End[]
