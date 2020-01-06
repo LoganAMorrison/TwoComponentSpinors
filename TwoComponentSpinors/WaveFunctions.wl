@@ -26,5 +26,8 @@ CurrentValue[$FrontEndSession, {InputAliases, "pol"}] = RowBox[{
         "]"
 }]
 
+PolarizationVector /: MakeBoxes[PolarizationVector[k_,m_],StandardForm]:=
+    RowBox[{MakeBoxes[Eps],"[",ToString[k],",",ToString[m],"]"}];
+
 
 End[]

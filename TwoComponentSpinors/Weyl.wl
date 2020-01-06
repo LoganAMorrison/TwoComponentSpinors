@@ -17,6 +17,18 @@ Weyl1::usage="Weyl1 represents the unit matrix in two-component spinor space";
 
 Begin["Private`"]
 
+(*
+WeylLine /: MakeBoxes[Weyl1,StandardForm]:=
+
+    RowBox[{"\[LeftAngleBracket]",RowBox[{sf1,"[",X`Internal`ToRowBox[{kin1}],"]"}],",",Sequence@@Riffle[Map[
+        Function[{item},
+            MakeBoxes[item,StandardForm],
+            {HoldAllComplete}
+        ],Unevaluated[{mtx}]],","],",",RowBox[{sf2,"[",X`Internal`ToRowBox[{kin2}],"]"}],"\[RightAngleBracket]"}]
+];
+*)
+
+
 End[]
 
 EndPackage[]
