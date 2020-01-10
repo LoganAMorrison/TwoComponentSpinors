@@ -2,8 +2,6 @@
 
 (* Mathematica Init File *)
 
-Needs["X`"];
-
 BeginPackage["TwoComponentSpinors`", {"X`"}];
 
 Print["Two Component Spinors"];

@@ -25,7 +25,7 @@ Begin["Private`"]
 
 PolarizationSum[expr_, k_]:=Module[{iexpr},
 
-	iexpr=X`Utilities`Uncontract[expr, k];
+	iexpr=X`Utilities`Uncontract[expr, PolarizationVector[k,_]];
 
 	ReplaceAll[iexpr,{
 		(* massless polarization spin sum *)
@@ -43,7 +43,7 @@ PolarizationSum[expr_, k_]:=Module[{iexpr},
 PolarizationSum[expr_,ks_List]:=Module[{iexpr,i},
 	iexpr=Expand[expr];
 	(* uncontract all momenta in ks*)
-	For[i=1,i<=Length[ks],i++,iexpr=X`Utilities`Uncontract[iexpr, ks[[i]]]];
+	For[i=1,i<=Length[ks],i++,iexpr=X`Utilities`Uncontract[iexpr, PolarizationVector[ks[[i]]]]];
 
 	iexpr//.{
 		(* massless polarization spin sum *)

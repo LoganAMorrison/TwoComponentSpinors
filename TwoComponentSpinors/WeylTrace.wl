@@ -58,11 +58,8 @@ WeylTrace[(WM:WeylMatrixL|WeylMatrixR)[args___]]:=Module[{iexpr},
         Message[WeylTrace::InvalidOddNumWeylArgs];Abort[];
     ];
     (* apply WeylTraceInternal to all iWMLL and iWMRR *)
-    iexpr=iexpr/.{
-        mtx_iWMLL :> WeylTraceInternal[mtx],
-        mtx_iWMRR :> WeylTraceInternal[mtx]
-    };
-    (* put coefficients back in *)
+    iexpr=iexpr/.{(iWM:iWMLL|iWMRR)[mtx___] :> WeylTraceInternal[iWM[mtx]]};
+    (* revert expression back to external form *)
 	ConvertToExternal[iexpr]
 ];
 

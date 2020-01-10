@@ -18,23 +18,13 @@ Symbol's.";
 Begin["Private`"]
 
 HermitianConjugateWeylMatrix[(WM:WeylMatrixR|WeylMatrixL)[args___]]:=Module[{iexpr},
-	iexpr=ConvertToInternal[WeylMatrixExpand[WM[args]]];
-	(* check if expression is RR *)
-	If[Not[FreeQ[iexpr,iWMRR]],
-		Return[ConvertToExternal[iWMLL@@Reverse[List[args]]]]
-	];
-	(* check if expression is LL *)
-	If[Not[FreeQ[iexpr,iWMLL]],
-		Return[ConvertToExternal[iWMRR@@Reverse[List[args]]]]
-	];
-	(* check if expression is RL *)
-	If[Not[FreeQ[iexpr,iWMRL]],
-		Return[ConvertToExternal[iWMRL@@Reverse[List[args]]]]
-	];
-	(* check if expression is LR *)
-	If[Not[FreeQ[iexpr,iWMLR]],
-		Return[ConvertToExternal[iWMLR@@Reverse[List[args]]]]
-	];
+	iexpr=ConvertToInternal[WM[args]];
+	iexpr/.{
+		iWMRR[mtx___] :> ConvertToExternal[iWMLL@@Reverse[List[mtx]]],
+		iWMLL[mtx___] :> ConvertToExternal[iWMRR@@Reverse[List[mtx]]],
+		iWMRL[mtx___] :> ConvertToExternal[iWMRL@@Reverse[List[mtx]]],
+		iWMLR[mtx___] :> ConvertToExternal[iWMLR@@Reverse[List[mtx]]]
+	}
 ]
 
 Options[HermitianConjugate] = {
