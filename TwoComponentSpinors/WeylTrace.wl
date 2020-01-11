@@ -21,7 +21,7 @@ SubscriptBox[\(mtx\), \(n\)]\)).";
 WeylTrace::InvalidOddNumWeylArgs="Odd number of Sigma matrices \
 encountered in WeylTrace[...].";
 
-Begin["Private`"]
+Begin["`Private`"]
 
 (* base case of Tr[1] *)
 WeylTraceInternal[(WM:iWMLL|iWMRR)[]] := 2;

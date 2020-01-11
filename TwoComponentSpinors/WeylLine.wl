@@ -34,7 +34,7 @@ WeylLineProduct::usage = \
 direct product of WeylLine objects \!\(\*SubscriptBox[\(wline\), \
 \(1\)]\), \!\(\*SubscriptBox[\(wline\), \(2\)]\), etc.";
 
-Begin["Private`"]
+Begin["`Private`"]
 
 CurrentValue[$FrontEndSession, {InputAliases, "lx"}]= RowBox[{
         "\[LeftAngleBracket]",

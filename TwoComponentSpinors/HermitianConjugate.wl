@@ -15,7 +15,7 @@ HermitianConjugate::InvalidComplexSymbols="ComplexSymbols must be a list of \
 Symbol's.";
 
 
-Begin["Private`"]
+Begin["`Private`"]
 
 HermitianConjugateWeylMatrix[(WM:WeylMatrixR|WeylMatrixL)[args___]]:=Module[{iexpr},
 	iexpr=ConvertToInternal[WM[args]];

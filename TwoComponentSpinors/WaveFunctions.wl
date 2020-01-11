@@ -16,7 +16,7 @@ SpinorY::usage="SpinorY[p, m] represents the y spinor wave-function with momentu
 
 PolarizationVector::usage="Polarization[k, m] represents a wavefunction \ polarization vector for a vector boson with momentum k and mass m.";
 
-Begin["Private`"]
+Begin["`Private`"]
 
 CurrentValue[$FrontEndSession, {InputAliases, "pol"}] = RowBox[{
     "\[ScriptE]", "[",

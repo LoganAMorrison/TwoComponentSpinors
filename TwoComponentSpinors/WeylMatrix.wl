@@ -20,7 +20,7 @@ encountered. Assuming inner WeylMatrixR is incorrect and stripping it off.";
 WeylMatrixR::InvalidWeylMatrixR="WeylMatrixR[...,WeylMatrixL[...]] \
 encountered. Assuming inner WeylMatrixL is incorrect and stripping it off.";
 
-Begin["Private`"]
+Begin["`Private`"]
 
 (* Remove any internal WeylMatrixL(R)'s from inside WeylMatrixL(R). '*)
 

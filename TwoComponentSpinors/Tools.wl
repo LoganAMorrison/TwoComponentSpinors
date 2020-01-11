@@ -11,7 +11,7 @@
 
 (*WeylLineProductExpand::usage="";*)
 
-Begin["Private`"]
+Begin["`Private`"]
 
 
 (* ConvertToInternal[expr]

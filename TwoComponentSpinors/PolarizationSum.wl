@@ -21,7 +21,7 @@ Bar::usage="Bar[k] If k = (E, kk), then Bar[k] = (E, -kk) where kk is the \
 vector component of k.";
 *)
 
-Begin["Private`"]
+Begin["`Private`"]
 
 PolarizationSum[expr_, k_]:=Module[{iexpr},
 

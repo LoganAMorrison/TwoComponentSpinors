@@ -11,7 +11,7 @@
 
 FermionSpinSum::usage="";
 
-Begin["Private`"]
+Begin["`Private`"]
 
 
 (* WeylLineApplyVectorFierz[expr]
