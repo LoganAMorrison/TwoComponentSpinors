@@ -34,6 +34,9 @@ WeylLineProduct::usage = \
 direct product of WeylLine objects \!\(\*SubscriptBox[\(wline\), \
 \(1\)]\), \!\(\*SubscriptBox[\(wline\), \(2\)]\), etc.";
 
+WeylLine::InvalidWeylMatrix="Invalid weyl-matrix encountered while \
+constructing WeylLine.";
+
 Begin["`Private`"]
 
 CurrentValue[$FrontEndSession, {InputAliases, "lx"}]= RowBox[{
@@ -132,6 +135,93 @@ WeylLine /: MakeBoxes[WeylLine[{sp1:1|-1,kin1__},{sp2:1|-1,kin2__},
 
     RowBox[{"\[LeftAngleBracket]",RowBox[{sf1,"[",X`Internal`ToRowBox[{kin1}],"]"}],",",Sequence@@Riffle[Map[Function[{item},MakeBoxes[item,StandardForm],{HoldAllComplete}],Unevaluated[{mtx}]],","],",",RowBox[{sf2,"[",X`Internal`ToRowBox[{kin2}],"]"}],"\[RightAngleBracket]"}]
 ];
+
+(*Parsing of Input braket notation to WeylLine object*)
+MakeExpression[
+    RowBox@({"\[LeftAngleBracket]",
+    RowBox[{spinor2_,"[",RowBox[kin2 : {PatternSequence[_, ","] .., _}],"]"}],",",
+    dMtxes : PatternSequence[_, ","] ...,
+    RowBox[{spinor1_,"[",RowBox[kin1 : {PatternSequence[_, ","] .., _}],"]"}],
+    "\[RightAngleBracket]"}),StandardForm]:= Module[{idx1,idx2,wm,iWM},
+
+        idx1=If[Or[spinor2===SuperscriptBox["\[ScriptX]","\[Dagger]"], spinor2==="\[ScriptX]"],
+                "1",
+                RowBox[{"-","1"}]
+        ];
+        idx2=If[Or[spinor1===SuperscriptBox["\[ScriptX]","\[Dagger]"], spinor1==="\[ScriptX]"],
+                "1",
+                RowBox[{"-","1"}]
+        ];
+        mw=If[Or[spinor1===SuperscriptBox["\[ScriptX]","\[Dagger]"], spinor1===SuperscriptBox["\[ScriptY]","\[Dagger]"]],
+              "WeylMatrixR",
+              "WeylMatrixL"
+        ];
+
+        iWM=ConvertToInternal[MakeExpression[RowBox[{mw,"[",RowBox[Riffle[{dMtxes}[[1 ;; -1 ;; 2]], ","]],"]"}]]/.HoldComplete[expr___]:>expr];
+
+        (* If iWMRR or iWMRL, need dagger on left *)
+        If[Or[Head[iWM]===iWMRR,Head[iWM]===iWMRL],
+            If[Not[MatchQ[spinor2,SuperscriptBox["\[ScriptX]","\[Dagger]"]|SuperscriptBox["\[ScriptY]","\[Dagger]"]]],
+                Message[WeylLine::InvalidWeylMatrix];Abort[];
+            ]
+        ];
+        (* If iWMLR or iWMLL, can't have dagger on left *)
+        If[Or[Head[iWM]===iWMLR,Head[iWM]===iWMLL],
+            If[Not[MatchQ[spinor2,"\[ScriptX]"|"\[ScriptY]"]],
+                Message[WeylLine::InvalidWeylMatrix];Abort[];
+            ]
+        ];
+
+        MakeExpression[RowBox[{"WeylLine","[",RowBox[
+    	 {RowBox[{"{",RowBox[Join[{idx2,","},Riffle[kin2[[1 ;; -1 ;; 2]], ","]]],"}"}],",",
+    	  RowBox[{"{",RowBox[Join[{idx1,","},Riffle[kin1[[1 ;; -1 ;; 2]], ","]]],"}"}],",",
+    	  RowBox[{mw,"[",RowBox[Riffle[{dMtxes}[[1 ;; -1 ;; 2]], ","]],"]"}]
+    	 }],"]"}],StandardForm
+    	]
+]/;And[MatchQ[spinor2,"\[ScriptX]"|"\[ScriptY]"|SuperscriptBox["\[ScriptX]","\[Dagger]"]|SuperscriptBox["\[ScriptY]","\[Dagger]"]],
+       MatchQ[spinor1,"\[ScriptX]"|"\[ScriptY]"|SuperscriptBox["\[ScriptX]","\[Dagger]"]|SuperscriptBox["\[ScriptY]","\[Dagger]"]]];
+
+MakeExpression[
+    RowBox@({"\[LeftAngleBracket]",RowBox[{RowBox[{spinor2_,"[",RowBox[kin2 : {PatternSequence[_, ","] .., _}],"]"}],",",
+    dMtxes : PatternSequence[_, ","] ...,
+    RowBox[{spinor1_,"[",RowBox[kin1 : {PatternSequence[_, ","] .., _}],"]"}]}],"\[RightAngleBracket]"}),StandardForm]:=Module[{idx1,idx2,wm,iWM},
+
+        idx2=If[Or[spinor2===SuperscriptBox["\[ScriptX]","\[Dagger]"], spinor2==="\[ScriptX]"],
+                "1",
+                RowBox[{"-","1"}]
+        ];
+        idx1=If[Or[spinor1===SuperscriptBox["\[ScriptX]","\[Dagger]"], spinor1==="\[ScriptX]"],
+                "1",
+                RowBox[{"-","1"}]
+        ];
+        mw=If[Or[spinor1===SuperscriptBox["\[ScriptX]","\[Dagger]"], spinor1===SuperscriptBox["\[ScriptY]","\[Dagger]"]],
+              "WeylMatrixR",
+              "WeylMatrixL"
+        ];
+
+        iWM=ConvertToInternal[MakeExpression[RowBox[{mw,"[",RowBox[Riffle[{dMtxes}[[1 ;; -1 ;; 2]], ","]],"]"}]]/.HoldComplete[expr___]:>expr];
+
+        (* If iWMRR or iWMRL, need dagger on left *)
+        If[Or[Head[iWM]===iWMRR,Head[iWM]===iWMRL],
+            If[Not[MatchQ[spinor2,SuperscriptBox["\[ScriptX]","\[Dagger]"]|SuperscriptBox["\[ScriptY]","\[Dagger]"]]],
+                Message[WeylLine::InvalidWeylMatrix];Abort[];
+            ]
+        ];
+        (* If iWMLR or iWMLL, can't have dagger on left *)
+        If[Or[Head[iWM]===iWMLR,Head[iWM]===iWMLL],
+            If[Not[MatchQ[spinor2,"\[ScriptX]"|"\[ScriptY]"]],
+                Message[WeylLine::InvalidWeylMatrix];Abort[];
+            ]
+        ];
+
+        MakeExpression[RowBox[{"WeylLine","[",RowBox[
+    	 {RowBox[{"{",RowBox[Join[{idx2,","},Riffle[kin2[[1 ;; -1 ;; 2]], ","]]],"}"}],",",
+    	  RowBox[{"{",RowBox[Join[{idx1,","},Riffle[kin1[[1 ;; -1 ;; 2]], ","]]],"}"}],",",
+    	  RowBox[{mw,"[",RowBox[Riffle[{dMtxes}[[1 ;; -1 ;; 2]], ","]],"]"}]
+    	 }],"]"}],StandardForm
+    	]
+]/;And[MatchQ[spinor2,"\[ScriptX]"|"\[ScriptY]"|SuperscriptBox["\[ScriptX]","\[Dagger]"]|SuperscriptBox["\[ScriptY]","\[Dagger]"]],
+       MatchQ[spinor1,"\[ScriptX]"|"\[ScriptY]"|SuperscriptBox["\[ScriptX]","\[Dagger]"]|SuperscriptBox["\[ScriptY]","\[Dagger]"]]];
 
 
 SetAttributes[WeylLineProduct,{Orderless}];
