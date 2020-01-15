@@ -26,8 +26,11 @@ CurrentValue[$FrontEndSession, {InputAliases, "pol"}] = RowBox[{
         "]"
 }]
 
-PolarizationVector /: MakeBoxes[PolarizationVector[k_,m_],StandardForm]:=
-    RowBox[{MakeBoxes[Eps],"[",ToString[k],",",ToString[m],"]"}];
+PolarizationVector /: MakeBoxes[PolarizationVector[k_,m_], StandardForm] :=
+    RowBox[{InterpretationBox["\[Epsilon]", PolarizationVector],"[",ToString[k],",",ToString[m],"]"}];
+
+PolarizationVector /: MakeBoxes[PolarizationVector[k_,m_], TraditionalForm] :=
+    RowBox[{InterpretationBox["\[Epsilon]", PolarizationVector],"(",ToString[k],",",ToString[m],")"}];
 
 
 End[]

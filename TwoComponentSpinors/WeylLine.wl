@@ -136,6 +136,33 @@ WeylLine /: MakeBoxes[WeylLine[{sp1:1|-1,kin1__},{sp2:1|-1,kin2__},
     RowBox[{"\[LeftAngleBracket]",RowBox[{sf1,"[",X`Internal`ToRowBox[{kin1}],"]"}],",",Sequence@@Riffle[Map[Function[{item},MakeBoxes[item,StandardForm],{HoldAllComplete}],Unevaluated[{mtx}]],","],",",RowBox[{sf2,"[",X`Internal`ToRowBox[{kin2}],"]"}],"\[RightAngleBracket]"}]
 ];
 
+WeylLine /:MakeBoxes[WeylLine[{sp1 : 1 | -1, kin1__}, {sp2 : 1 | -1,kin2__}, (WM : WeylMatrixL | WeylMatrixR)[mtx___]],TraditionalForm] :=
+  Module[{iexpr, sf1, sf2},
+   iexpr = ConvertToInternal[WeylMatrixExpand[WM[mtx]]];
+   If[Or[Not[FreeQ[iexpr, iWMRR]],
+     Not[FreeQ[iexpr, iWMRL]]],(*If matrix has left dotted index*)
+    sf1 = Switch[sp1, 1,
+      SuperscriptBox["\[ScriptX]", "\[Dagger]"], -1,
+      SuperscriptBox["\[ScriptY]",
+       "\[Dagger]"]],(*If matrix has left undotted index*)
+    sf1 = Switch[sp1, 1, "\[ScriptX]", -1, "\[ScriptY]"];];
+   If[Or[Not[FreeQ[iexpr, iWMRR]],
+     Not[FreeQ[iexpr, iWMLR]]],(*If matrix has right dotted index*)
+    sf2 = Switch[sp2, 1,
+      SuperscriptBox["\[ScriptX]", "\[Dagger]"], -1,
+      SuperscriptBox["\[ScriptY]",
+       "\[Dagger]"]],(*If matrix has right undotted index*)
+    sf2 = Switch[sp2, 1, "\[ScriptX]", -1, "\[ScriptY]"];];
+
+   RowBox[{"[", RowBox[{sf1, "(", X`Internal`ToRowBox[{kin1}], ")"}],"(",
+    Sequence @@
+      Riffle[
+       Map[Function[{item},
+         MakeBoxes[item, TraditionalForm], {HoldAllComplete}],
+        Unevaluated[{mtx}]], ")("],")",
+     RowBox[{sf2, "(", X`Internal`ToRowBox[{kin2}], ")"}], "]"}]
+   ];
+
 (*Parsing of Input braket notation to WeylLine object*)
 MakeExpression[
     RowBox@({"\[LeftAngleBracket]",
@@ -246,5 +273,6 @@ WeylLineProduct /: Times[
 
 
 WeylLineProduct  /: MakeBoxes[WeylLineProduct[lines___],StandardForm]:=RowBox[List@@Riffle[Map[Function[{item},MakeBoxes[item,StandardForm],{HoldAllComplete}],Unevaluated[{lines}]],"\[CircleTimes]"]];
+WeylLineProduct  /: MakeBoxes[WeylLineProduct[lines___],TraditionalForm]:=RowBox[List@@Riffle[Map[Function[{item},MakeBoxes[item,TraditionalForm],{HoldAllComplete}],Unevaluated[{lines}]],"\[CircleTimes]"]];
 
 End[]

@@ -37,4 +37,12 @@ WeylMatrixL[left___, (WeylMatrixL|WeylMatrixR)[mtx___],right__]:=
 WeylMatrixR[left___, (WeylMatrixL|WeylMatrixR)[mtx___],right__]:=
     WeylMatrixL[left,mtx,right];
 
+
+WeylS /: MakeBoxes[WeylS, StandardForm] := InterpretationBox["\[Sigma]", WeylS]
+WeylS /: MakeBoxes[WeylS, TraditionalForm] := InterpretationBox["\[Sigma]", WeylS]
+
+Weyl1 /: MakeBoxes[Weyl1, StandardForm] := InterpretationBox["\[DoubleStruckOne]", Weyl1]
+Weyl1 /: MakeBoxes[Weyl1, TraditionalForm] := InterpretationBox["\[DoubleStruckOne]", Weyl1]
+(*WeylS /: MakeBoxes[WeylS, StandardForm] := InterpretationBox[OverscriptBox["\[Sigma]", "_"], WeylS]*)
+
 End[]
